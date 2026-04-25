@@ -34,10 +34,10 @@ pip install -r requirements.txt
 jupyter notebook
 ```
 
-3. Ejecutar los notebooks en este orden:
+3. Ejecutar los notebooks en este orden dentro de cada carpeta:
 
-* `eda.ipynb`: análisis exploratorio de los datos
-* `model_training.ipynb`: entrenamiento del modelo y generación de predicciones
+* `EDA(Análisis Exploratorio de Datos)`: análisis exploratorio de los datos
+* `Modelo 1` y `Modelo 2` : entrenamiento del modelo, feature engineering y generación de predicciones
 
 4. Ejecutar todas las celdas en orden.
 
