@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Premier ML Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script defer src="./data.js"></script>
+  <script defer src="./script.js"></script>
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Career Analytics Hub</p>
+        <h1 class="brand">Premier <span>ML</span> Dashboard</h1>
+      </div>
+      <div class="topbar-badges">
+        <span class="badge badge-live" id="runtimeBadge">Data Sync</span>
+        <span class="badge" id="seasonBadge">Premier League 2025-26</span>
+        <span class="badge" id="matchCountBadge">291 partidos</span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">FIFA Career Mode Style</p>
+        <h2>Scouting visual, predicción de partidos y lectura de rendimiento en una sola pantalla.</h2>
+        <p class="hero-text">
+          Dashboard interactivo construido con los datos reales del proyecto para explorar partidos, tiros, métricas de
+          modelo y señales de análisis exploratorio sin romperse en modo local.
+        </p>
+      </div>
+      <div class="hero-stats">
+        <article class="hero-stat">
+          <span class="hero-label">Equipos</span>
+          <strong id="heroTeams">20</strong>
+          <small>Pool completo</small>
+        </article>
+        <article class="hero-stat">
+          <span class="hero-label">Shots</span>
+          <strong id="heroShots">7,198</strong>
+          <small>Mapa xG activo</small>
+        </article>
+        <article class="hero-stat">
+          <span class="hero-label">Accuracy</span>
+          <strong id="heroAccuracy">52.1%</strong>
+          <small>Match predictor</small>
+        </article>
+      </div>
+    </section>
+
+    <nav class="tabbar">
+      <button class="tab active" data-tab="predictor">Match Predictor</button>
+      <button class="tab" data-tab="shotmap">Shot Map</button>
+      <button class="tab" data-tab="performance">Performance</button>
+      <button class="tab" data-tab="eda">EDA</button>
+    </nav>
+
+    <main class="page">
+      <section id="predictor-section" class="section active">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Modelo H / D / A</p>
+            <h2>Match Predictor</h2>
+          </div>
+          <p class="section-copy">Siempre devuelve una predicción: exacta, invertida o estimada por fallback.</p>
+        </div>
+
+        <div class="predictor-layout">
+          <div class="predictor-main">
+            <article class="card predictor-card" id="predictorArena">
+              <div class="card-head">
+                <h3>Selector de partido</h3>
+                <span class="card-tag" id="predictionMode">Exact match</span>
+              </div>
+
+              <div class="selector-row selector-row-game">
+                <label class="selector-block team-card" id="homeTeamCard">
+                  <span>Local</span>
+                  <select id="homeSelect"></select>
+                  <small id="homeTeamMeta">Fortaleza ofensiva</small>
+                </label>
+                <div class="vs-pill">VS</div>
+                <label class="selector-block team-card" id="awayTeamCard">
+                  <span>Visitante</span>
+                  <select id="awaySelect"></select>
+                  <small id="awayTeamMeta">Presión visitante</small>
+                </label>
+              </div>
+
+              <div class="probability-stack">
+                <div class="prob-item">
+                  <div class="prob-line">
+                    <span id="homeTeamLabel">Local</span>
+                    <strong id="homeProb">0.0%</strong>
+                  </div>
+                  <div class="bar-track">
+                    <div class="bar-fill bar-home" id="homeBar"></div>
+                  </div>
+                </div>
+                <div class="prob-item">
+                  <div class="prob-line">
+                    <span>Empate</span>
+                    <strong id="drawProb">0.0%</strong>
+                  </div>
+                  <div class="bar-track">
+                    <div class="bar-fill bar-draw" id="drawBar"></div>
+                  </div>
+                </div>
+                <div class="prob-item">
+                  <div class="prob-line">
+                    <span id="awayTeamLabel">Visitante</span>
+                    <strong id="awayProb">0.0%</strong>
+                  </div>
+                  <div class="bar-track">
+                    <div class="bar-fill bar-away" id="awayBar"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="probability-radar" id="probabilityRadar">
+                <article class="outcome-card" id="outcomeHome">
+                  <span>Home</span>
+                  <strong id="outcomeHomeValue">0.0%</strong>
+                  <small id="homeOdds">Odds 1.00</small>
+                </article>
+                <article class="outcome-card" id="outcomeDraw">
+                  <span>Draw</span>
+                  <strong id="outcomeDrawValue">0.0%</strong>
+                  <small id="drawOdds">Odds 1.00</small>
+                </article>
+                <article class="outcome-card" id="outcomeAway">
+                  <span>Away</span>
+                  <strong id="outcomeAwayValue">0.0%</strong>
+                  <small id="awayOdds">Odds 1.00</small>
+                </article>
+              </div>
+
+              <div class="prediction-callout">
+                <span class="prediction-label">Resultado predicho</span>
+                <strong id="predResultVal">Selecciona dos equipos</strong>
+                <small id="predResultSub">La lógica usa búsqueda exacta, invertida o promedio por fortaleza.</small>
+              </div>
+
+              <div class="mini-grid">
+                <article class="mini-stat">
+                  <span>Fecha base</span>
+                  <strong id="predMatchDate">-</strong>
+                </article>
+                <article class="mini-stat">
+                  <span>Marcador real</span>
+                  <strong id="predActualScore">-</strong>
+                </article>
+                <article class="mini-stat">
+                  <span>Confianza</span>
+                  <strong id="predConfidence">-</strong>
+                </article>
+              </div>
+            </article>
+
+            <div class="predictor-subgrid">
+              <article class="card guide-card">
+                <div class="card-head">
+                  <h3>Cómo se usa</h3>
+                  <span class="card-tag">Quick Guide</span>
+                </div>
+                <div class="guide-list">
+                  <div class="guide-item">
+                    <strong>Bet Slip</strong>
+                    <p>Selecciona Home, Draw o Away, define el stake y pulsa Place Bet para guardar la apuesta.</p>
+                  </div>
+                  <div class="guide-item">
+                    <strong>Tracking de apuestas</strong>
+                    <p>Revisa cuántas apuestas llevas, tu acierto, balance y usa Borrar historial si quieres reiniciar.</p>
+                  </div>
+                  <div class="guide-item">
+                    <strong>Simulador de partido</strong>
+                    <p>Pulsa Simular Partido después de escoger equipos para ver marcador final y eventos simulados.</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="card sim-card">
+                <div class="card-head">
+                  <h3>Simulador de partido</h3>
+                  <span class="card-tag" id="simModeTag">Probability Engine</span>
+                </div>
+                <div class="simulation-scoreboard">
+                  <div class="score-team">
+                    <span id="simHomeName">Local</span>
+                    <strong id="simHomeScore">0</strong>
+                  </div>
+                  <div class="score-separator">-</div>
+                  <div class="score-team">
+                    <span id="simAwayName">Visitante</span>
+                    <strong id="simAwayScore">0</strong>
+                  </div>
+                </div>
+                <button class="action-button" id="simulateBtn" type="button">Simular Partido</button>
+                <div class="sim-events" id="simEvents">
+                  <div class="sim-placeholder">Ejecuta una simulación para ver goles y eventos del partido.</div>
+                </div>
+              </article>
+
+              <article class="card insights-card">
+                <div class="card-head">
+                  <h3>Insights del modelo</h3>
+                  <span class="card-tag">Explicabilidad</span>
+                </div>
+                <div class="insights-list" id="insightsList"></div>
+                <div class="projected-table">
+                  <div class="projected-head">
+                    <strong>Impacto simulado</strong>
+                    <span id="projectedLabel">Sin simulación</span>
+                  </div>
+                  <div class="table-wrap compact-table">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Equipo</th>
+                          <th>Pts</th>
+                          <th>DG</th>
+                        </tr>
+                      </thead>
+                      <tbody id="projectedTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="predictor-side">
+            <article class="card betslip-card">
+              <div class="card-head">
+                <h3>Bet Slip</h3>
+                <span class="card-tag" id="betStatusTag">Ready</span>
+              </div>
+              <div class="bet-options">
+                <button class="bet-option active" type="button" data-bet-outcome="H">
+                  <span>Home</span>
+                  <strong id="betHomeOdd">1.00</strong>
+                </button>
+                <button class="bet-option" type="button" data-bet-outcome="D">
+                  <span>Draw</span>
+                  <strong id="betDrawOdd">1.00</strong>
+                </button>
+                <button class="bet-option" type="button" data-bet-outcome="A">
+                  <span>Away</span>
+                  <strong id="betAwayOdd">1.00</strong>
+                </button>
+              </div>
+
+              <label class="stake-block">
+                <span>Stake</span>
+                <input id="stakeInput" type="number" min="1000" step="1000" value="10000" />
+              </label>
+
+              <div class="bet-totals">
+                <div class="bet-total-row">
+                  <span>Selección</span>
+                  <strong id="betSelectionLabel">Home</strong>
+                </div>
+                <div class="bet-total-row">
+                  <span>Cuota</span>
+                  <strong id="betOddsValue">1.00</strong>
+                </div>
+                <div class="bet-total-row">
+                  <span>Ganancia potencial</span>
+                  <strong id="potentialPayout">$0</strong>
+                </div>
+              </div>
+
+              <button class="action-button accent" id="placeBetBtn" type="button">Place Bet</button>
+              <small class="helper-text" id="betHelperText">Las cuotas se calculan como 1 / probabilidad del modelo.</small>
+            </article>
+
+            <article class="card tracking-card">
+              <div class="card-head">
+                <h3>Tracking de apuestas</h3>
+                <span class="card-tag">localStorage</span>
+              </div>
+            <div class="tracking-grid">
+              <article class="mini-stat">
+                <span>Apuestas</span>
+                <strong id="betCount">0</strong>
+              </article>
+                <article class="mini-stat">
+                  <span>Acierto</span>
+                  <strong id="betHitRate">0%</strong>
+                </article>
+                <article class="mini-stat">
+                  <span>P&amp;L</span>
+                  <strong id="betPnL">$0</strong>
+                </article>
+                <article class="mini-stat">
+                <span>Open</span>
+                <strong id="openBetsCount">0</strong>
+              </article>
+            </div>
+            <button class="action-button danger" id="clearBetsBtn" type="button">Borrar historial</button>
+            <div class="bets-history" id="betsHistory">
+              <div class="sim-placeholder">Todavía no hay apuestas guardadas.</div>
+            </div>
+          </article>
+
+            <article class="card matches-card">
+              <div class="card-head">
+                <h3>Lista de partidos</h3>
+                <span class="card-tag" id="listCountTag">291 registros</span>
+              </div>
+              <input type="text" id="matchSearch" class="search-input" placeholder="Buscar por equipo..." />
+              <div class="matches-list" id="matchesList"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="shotmap-section" class="section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Modelo xG</p>
+            <h2>Shot Map Interactivo</h2>
+          </div>
+          <p class="section-copy">Visualiza tiros reales del dataset con un xG estimado para explorar contexto y calidad.</p>
+        </div>
+
+        <div class="stats-row">
+          <article class="stat-card">
+            <span>Total tiros</span>
+            <strong id="shotCountValue">7,198</strong>
+            <small>Eventos marcados como shot</small>
+          </article>
+          <article class="stat-card">
+            <span>Goles</span>
+            <strong id="goalCountValue">807</strong>
+            <small id="goalRateValue">Conversión general</small>
+          </article>
+          <article class="stat-card">
+            <span>xG promedio</span>
+            <strong id="avgXgValue">0.00</strong>
+            <small>Sobre todos los tiros</small>
+          </article>
+          <article class="stat-card">
+            <span>Zona top</span>
+            <strong id="topZoneValue">BoxCentre</strong>
+            <small>Mayor volumen de disparos</small>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="controls">
+            <div class="control-group">
+              <span>Resultado</span>
+              <div class="control-buttons">
+                <button class="control-btn active" data-shot-filter="all">Todos</button>
+                <button class="control-btn" data-shot-filter="goal">Goles</button>
+                <button class="control-btn" data-shot-filter="nogol">No gol</button>
+              </div>
+            </div>
+            <label class="control-group">
+              <span>Equipo</span>
+              <select id="teamFilter"></select>
+            </label>
+            <label class="control-group">
+              <span>xG mínimo</span>
+              <select id="xgFilter">
+                <option value="0">Sin filtro</option>
+                <option value="0.1">0.10</option>
+                <option value="0.2">0.20</option>
+                <option value="0.35">0.35</option>
+                <option value="0.5">0.50</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="pitch-panel">
+            <svg id="pitchSvg" viewBox="0 0 780 520" xmlns="http://www.w3.org/2000/svg" aria-label="Shot map">
+              <defs>
+                <linearGradient id="pitchGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#215b37" />
+                  <stop offset="50%" stop-color="#1b7a41" />
+                  <stop offset="100%" stop-color="#143e28" />
+                </linearGradient>
+                <filter id="shotGlow">
+                  <feGaussianBlur stdDeviation="2.2" result="glow" />
+                  <feMerge>
+                    <feMergeNode in="glow" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <rect x="0" y="0" width="780" height="520" fill="url(#pitchGrad)" />
+              <g opacity="0.08" fill="#000">
+                <rect x="0" y="0" width="97.5" height="520" />
+                <rect x="195" y="0" width="97.5" height="520" />
+                <rect x="390" y="0" width="97.5" height="520" />
+                <rect x="585" y="0" width="97.5" height="520" />
+              </g>
+              <g stroke="rgba(255,255,255,0.55)" stroke-width="1.5" fill="none">
+                <rect x="10" y="10" width="760" height="500" rx="2" />
+                <line x1="390" y1="10" x2="390" y2="510" />
+                <circle cx="390" cy="260" r="73" />
+                <circle cx="390" cy="260" r="2.5" fill="rgba(255,255,255,0.55)" />
+                <rect x="10" y="131" width="120" height="258" />
+                <rect x="10" y="199" width="40" height="122" />
+                <circle cx="84" cy="260" r="2.5" fill="rgba(255,255,255,0.55)" />
+                <rect x="650" y="131" width="120" height="258" />
+                <rect x="730" y="199" width="40" height="122" />
+                <circle cx="696" cy="260" r="2.5" fill="rgba(255,255,255,0.55)" />
+                <rect x="10" y="222" width="-12" height="76" stroke-width="2" />
+                <rect x="770" y="222" width="12" height="76" stroke-width="2" />
+                <path d="M10,10 Q18,10 18,18" />
+                <path d="M770,10 Q762,10 762,18" />
+                <path d="M10,510 Q18,510 18,502" />
+                <path d="M770,510 Q762,510 762,502" />
+              </g>
+              <text x="700" y="28" class="pitch-label">Rival Goal</text>
+              <g id="shotsLayer"></g>
+            </svg>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item"><span class="legend-dot dot-goal"></span>Gol</div>
+            <div class="legend-item"><span class="legend-dot dot-high"></span>No gol xG alto</div>
+            <div class="legend-item"><span class="legend-dot dot-mid"></span>No gol xG medio</div>
+            <div class="legend-item"><span class="legend-dot dot-low"></span>No gol xG bajo</div>
+            <div class="legend-item legend-note" id="visibleShotsCount">0 tiros visibles</div>
+          </div>
+        </article>
+      </section>
+
+      <section id="performance-section" class="section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Evaluación de modelos</p>
+            <h2>Performance</h2>
+          </div>
+          <p class="section-copy">Lectura rápida de métricas, benchmark y señal comparativa frente a apuestas.</p>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-head">
+              <h3>Modelo xG</h3>
+              <span class="card-tag" id="xgAucTag">AUC 79.8%</span>
+            </div>
+            <div class="metric-list" id="xgMetricList"></div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Match Predictor</h3>
+              <span class="card-tag" id="edgeTag">+2.3 vs benchmark</span>
+            </div>
+            <div class="metric-list" id="matchMetricList"></div>
+          </article>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-head">
+              <h3>Benchmark</h3>
+              <span class="card-tag">vs Bet365</span>
+            </div>
+            <div class="benchmark-block">
+              <div class="benchmark-row">
+                <span>Nuestro modelo</span>
+                <div class="bar-track large">
+                  <div class="bar-fill bar-our" id="ourBenchmarkBar"></div>
+                </div>
+                <strong id="ourBenchmarkValue">52.1%</strong>
+              </div>
+              <div class="benchmark-row">
+                <span>Bet365</span>
+                <div class="bar-track large">
+                  <div class="bar-fill bar-book" id="benchmarkBar"></div>
+                </div>
+                <strong id="benchmarkValue">49.8%</strong>
+              </div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Curva ROC</h3>
+              <span class="card-tag">Modelo xG</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="rocChart"></canvas>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="eda-section" class="section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Exploración de datos</p>
+            <h2>EDA</h2>
+          </div>
+          <p class="section-copy">Resumen visual de resultados, goles, zonas de remate y fortaleza ofensiva por equipo.</p>
+        </div>
+
+        <div class="stats-row">
+          <article class="stat-card">
+            <span>Partidos</span>
+            <strong id="edaMatches">291</strong>
+            <small>Base usada por el predictor</small>
+          </article>
+          <article class="stat-card">
+            <span>Goles totales</span>
+            <strong id="edaGoals">0</strong>
+            <small id="edaGoalsRate">0 por partido</small>
+          </article>
+          <article class="stat-card">
+            <span>Home wins</span>
+            <strong id="edaHomeWins">0%</strong>
+            <small>Ventaja local</small>
+          </article>
+          <article class="stat-card">
+            <span>Top ataque</span>
+            <strong id="edaTopAttack">Arsenal</strong>
+            <small>Mayor producción ofensiva</small>
+          </article>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-head">
+              <h3>Distribución de resultados</h3>
+              <span class="card-tag" id="resultsTag">H / D / A</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="resultsChart"></canvas>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Distribución de goles</h3>
+              <span class="card-tag">Por partido</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="goalsChart"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-head">
+              <h3>Conversión por zona</h3>
+              <span class="card-tag">Shots + goles</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="zoneChart"></canvas>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Top 10 equipos por goles</h3>
+              <span class="card-tag">Ranking ofensivo</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="teamsChart"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>Tabla ofensiva resumida</h3>
+            <span class="card-tag">Top 8</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Equipo</th>
+                  <th>Goles</th>
+                  <th>GC</th>
+                  <th>DG</th>
+                  <th>Pts</th>
+                  <th>G/P</th>
+                </tr>
+              </thead>
+              <tbody id="teamTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div id="shotTooltip" class="shot-tooltip" aria-hidden="true"></div>
+</body>
+
+</html>
