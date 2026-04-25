@@ -42,6 +42,3 @@ jupyter notebook
 4. Ejecutar todas las celdas en orden.
 
 **Nota:** No es necesario ejecutar los notebooks para usar el dashboard, ya que los datos ya están incluidos.
-
-
-Nota: No es necesario ejecutar los notebooks para usar el dashboard, ya que los datos ya están incluidos.
